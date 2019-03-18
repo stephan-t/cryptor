@@ -63,7 +63,7 @@ public class AESCrypt {
 
             // Derive AES key from password using PBKDF2
             SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
-            KeySpec spec = new PBEKeySpec(password, salt, 5000, 256);
+            KeySpec spec = new PBEKeySpec(password, salt, 10000, 256);
             SecretKey key = keyFactory.generateSecret(spec);
             key = new SecretKeySpec(key.getEncoded(), "AES");
 
