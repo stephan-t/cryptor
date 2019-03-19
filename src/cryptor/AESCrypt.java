@@ -16,6 +16,16 @@ import java.util.Scanner;
  * Encrypts a plaintext file using AES and a PBKDF2 derived cipher key.
  */
 public class AESCrypt {
+
+    private static final String CIPHER_ALGORITHM = "AES/CBC/PKCS5Padding";
+    private static final int IV_SIZE = 16;
+
+    private static final String KEY_ALGORITHM = "PBKDF2WithHmacSHA512";
+    private static final int SALT_SIZE = 16;
+    private static final int ITERATIONS = 10000;
+    private static final int KEY_LENGTH = 256;
+
+
     public static void main(String[] args)
             throws IOException, GeneralSecurityException {
         // Request cipher mode from user
@@ -50,7 +60,7 @@ public class AESCrypt {
              OutputStream out = new FileOutputStream(fileOut)) {
 
             SecureRandom random = new SecureRandom();
-            byte[] salt = new byte[16];
+            byte[] salt = new byte[SALT_SIZE];
 
             if (modeIn.equals("e")) {
                 // Generate salt and prepend to output
@@ -62,30 +72,30 @@ public class AESCrypt {
             }
 
             // Derive AES key from password using PBKDF2
-            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
-            KeySpec spec = new PBEKeySpec(password, salt, 10000, 256);
+            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(KEY_ALGORITHM);
+            KeySpec spec = new PBEKeySpec(password, salt, ITERATIONS, KEY_LENGTH);
             SecretKey key = keyFactory.generateSecret(spec);
             key = new SecretKeySpec(key.getEncoded(), "AES");
 
             if (modeIn.equals("e")) {
                 // Generate initialization vector and prepend to output
-                byte[] ivBytes = new byte[16];
+                byte[] ivBytes = new byte[IV_SIZE];
                 random.nextBytes(ivBytes);
                 IvParameterSpec iv = new IvParameterSpec(ivBytes);
                 out.write(ivBytes);
 
                 // Encrypt file
-                Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
                 cipher.init(mode, key, iv);
                 CryptUtil.crypt(in, out, cipher);
             } else {
                 // Get prepended initialization vector from input
-                byte[] ivBytes = new byte[16];
+                byte[] ivBytes = new byte[IV_SIZE];
                 in.read(ivBytes, 0, ivBytes.length);
                 IvParameterSpec iv = new IvParameterSpec(ivBytes);
 
                 // Decrypt file
-                Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
                 cipher.init(mode, key, iv);
                 CryptUtil.crypt(in, out, cipher);
             }
