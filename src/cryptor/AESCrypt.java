@@ -25,7 +25,6 @@ public class AESCrypt {
     private static final int ITERATIONS = 10000;
     private static final int KEY_LENGTH = 256;
 
-
     public static void main(String[] args)
             throws IOException, GeneralSecurityException {
         // Request cipher mode from user
@@ -77,28 +76,25 @@ public class AESCrypt {
             SecretKey key = keyFactory.generateSecret(spec);
             key = new SecretKeySpec(key.getEncoded(), "AES");
 
+            IvParameterSpec iv = null;
             if (modeIn.equals("e")) {
                 // Generate initialization vector and prepend to output
                 byte[] ivBytes = new byte[IV_SIZE];
                 random.nextBytes(ivBytes);
-                IvParameterSpec iv = new IvParameterSpec(ivBytes);
+                iv = new IvParameterSpec(ivBytes);
                 out.write(ivBytes);
-
-                // Encrypt file
-                Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
-                cipher.init(mode, key, iv);
-                CryptUtil.crypt(in, out, cipher);
             } else {
                 // Get prepended initialization vector from input
                 byte[] ivBytes = new byte[IV_SIZE];
                 in.read(ivBytes, 0, ivBytes.length);
-                IvParameterSpec iv = new IvParameterSpec(ivBytes);
-
-                // Decrypt file
-                Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
-                cipher.init(mode, key, iv);
-                CryptUtil.crypt(in, out, cipher);
+                iv = new IvParameterSpec(ivBytes);
             }
+
+            // Encrypt/decrypt file
+            Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
+            cipher.init(mode, key, iv);
+            byte[] outBytes = cipher.doFinal(in.readAllBytes());
+            out.write(outBytes);
         }
     }
 }
